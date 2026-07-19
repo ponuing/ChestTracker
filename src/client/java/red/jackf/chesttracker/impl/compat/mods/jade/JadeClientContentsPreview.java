@@ -59,8 +59,6 @@ public class JadeClientContentsPreview implements IBlockComponentProvider {
 
         if (!currentLine.isEmpty()) lines.add(currentLine);
 
-        System.out.println("re");
-
         for (List<LayoutElement> line : lines) {
             tooltip.add(line);
             tooltip.setLineMargin(-1, ScreenDirection.DOWN, -1);
