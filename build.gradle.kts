@@ -212,8 +212,8 @@ dependencies {
     if (isBundlingSearchables) include("com.blamejared.searchables:Searchables-fabric-${properties["searchables_version"]}")
 
     // Mod Menu
-    compileOnly("com.terraformersmc:modmenu:${properties["modmenu_version"]}")
-    localRuntime("com.terraformersmc:modmenu:${properties["modmenu_version"]}")
+    compileOnly("maven.modrinth:modmenu:${properties["modmenu_version"]}")
+    localRuntime("maven.modrinth:modmenu:${properties["modmenu_version"]}")
 
     // Shulker Box Tooltip
     compileOnly("com.misterpemodder:shulkerboxtooltip-fabric:${properties["shulkerboxtooltip_version"]}")
