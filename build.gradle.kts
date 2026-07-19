@@ -431,6 +431,8 @@ if (canPublish) {
                             slug.set("searchables")
                         }
                     }
+                    clientRequired = true
+                    serverRequired = false
                 }
             }
 
