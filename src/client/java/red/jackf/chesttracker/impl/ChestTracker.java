@@ -42,6 +42,7 @@ import red.jackf.chesttracker.impl.providers.ScreenCloseContextImpl;
 import red.jackf.chesttracker.impl.providers.ScreenOpenContextImpl;
 import red.jackf.chesttracker.impl.rendering.NameRenderer;
 import red.jackf.chesttracker.impl.storage.ConnectionSettings;
+import red.jackf.chesttracker.impl.storage.GlobalMemoryBankDefaults;
 import red.jackf.chesttracker.impl.storage.Storage;
 import red.jackf.chesttracker.impl.storage.backend.JsonBackend;
 import red.jackf.chesttracker.impl.storage.backend.NbtBackend;
@@ -189,6 +190,7 @@ public class ChestTracker implements ClientModInitializer {
         Storage.setup();
         DeveloperOverlay.setup();
         ConnectionSettings.load();
+        GlobalMemoryBankDefaults.load();
         ButtonPositionMap.loadUserPositions();
 
         for (EntrypointContainer<ChestTrackerPlugin> container : FabricLoader.getInstance().getEntrypointContainers("chesttracker", ChestTrackerPlugin.class)) {
