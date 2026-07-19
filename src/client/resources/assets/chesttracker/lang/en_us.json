@@ -67,6 +67,8 @@
   "chesttracker.gui.editMemoryBank.markDefault": "Make Default",
   "chesttracker.gui.editMemoryBank.alreadyDefault": "Already Default",
   "chesttracker.gui.editMemoryBank.markDefault.tooltip": "Mark this Memory Bank as the default for the current connection/world.",
+  "chesttracker.gui.editMemoryBank.saveGlobalDefaults": "Save Global Defaults",
+  "chesttracker.gui.editMemoryBank.saveGlobalDefaults.tooltip": "Use this Memory Bank settings for default settings in worlds.",
   "chesttracker.gui.editMemoryBank.compatibility": "Compatibility",
   "chesttracker.gui.editMemoryBank.compatibility.nameFilterMode": "Name Filtering Mode",
   "chesttracker.gui.editMemoryBank.compatibility.nameFilterMode.tooltip": "Filtering applied to container label names. This can be useful if a server supplies a resource pack which makes use of high-codepoint characters for UI.",

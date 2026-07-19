@@ -5,6 +5,7 @@ import red.jackf.chesttracker.api.memory.MemoryBank;
 import red.jackf.chesttracker.api.memory.MemoryBankAccess;
 import red.jackf.chesttracker.impl.memory.metadata.Metadata;
 import red.jackf.chesttracker.impl.storage.ConnectionSettings;
+import red.jackf.chesttracker.impl.storage.GlobalMemoryBankDefaults;
 import red.jackf.chesttracker.impl.storage.Storage;
 import red.jackf.jackfredlib.client.api.gps.Coordinate;
 
@@ -22,9 +23,15 @@ public class MemoryBankAccessImpl implements MemoryBankAccess {
 
     @Override
     public boolean loadOrCreate(String memoryBankId, String creationName) {
+        return loadOrCreate(memoryBankId, creationName, null);
+    }
+
+    public boolean loadOrCreate(String memoryBankId, String creationName, @Nullable Metadata defaultMetadata) {
         INSTANCE.unload();
         loaded = Storage.load(memoryBankId).orElseGet(() -> {
-            var bank = new MemoryBankImpl(Metadata.blankWithName(creationName), new HashMap<>());
+            var defaults = defaultMetadata == null ? GlobalMemoryBankDefaults.get() : defaultMetadata;
+            var metadata = Metadata.fromDefaults(creationName, defaults, defaultMetadata == null || defaults.usesGlobalDefaults());
+            var bank = new MemoryBankImpl(metadata, new HashMap<>());
             bank.setId(memoryBankId);
             return bank;
         });

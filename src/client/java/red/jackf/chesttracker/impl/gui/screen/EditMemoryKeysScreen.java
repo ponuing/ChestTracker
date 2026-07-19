@@ -40,6 +40,10 @@ public class EditMemoryKeysScreen extends BaseUtilScreen {
         this.bankView = memoryBank;
     }
 
+    private void markSettingsCustom() {
+        this.bankView.metadata().setUsesGlobalDefaults(false);
+    }
+
     @Override
     public void tick() {
         if (this.scheduleRebuild) {
@@ -86,9 +90,11 @@ public class EditMemoryKeysScreen extends BaseUtilScreen {
                     newIndex -> {
                         if (newIndex < currentIndex) {
                             this.bankView.metadata().getVisualSettings().moveIcon(currentIndex, newIndex);
+                            markSettingsCustom();
                             scheduleRebuild = true;
                         } else if (newIndex > currentIndex + 1) {
                             this.bankView.metadata().getVisualSettings().moveIcon(currentIndex, newIndex - 1);
+                            markSettingsCustom();
                             scheduleRebuild = true;
                         }
                     })));
@@ -107,6 +113,7 @@ public class EditMemoryKeysScreen extends BaseUtilScreen {
                                     item -> {
                                         if (item != null) {
                                             this.bankView.metadata().getVisualSettings().setIcon(key, new ItemStack(item));
+                                            markSettingsCustom();
                                             scheduleRebuild = true;
                                         }
                                     }
@@ -142,6 +149,7 @@ public class EditMemoryKeysScreen extends BaseUtilScreen {
                     GuiConstants.ARE_YOU_SURE_BUTTON_HOLD_TIME,
                     button -> {
                         this.bankView.removeKey(key);
+                        markSettingsCustom();
                         // can't schedule rebuilt during rendering because CME, so do it on tick
                         this.scheduleRebuild = true;
                     }));
@@ -157,6 +165,7 @@ public class EditMemoryKeysScreen extends BaseUtilScreen {
                          translatable("chesttracker.gui.editMemoryKeys.useDefaultIconOrdering"), (cycleButton, newValue) -> {
                                  this.bankView.metadata().getVisualSettings().useDefaultIconOrder = newValue;
                                  this.bankView.metadata().getVisualSettings().reorderIfNecessary();
+                                 markSettingsCustom();
                                  this.scheduleRebuild = true;
                          }));
 
