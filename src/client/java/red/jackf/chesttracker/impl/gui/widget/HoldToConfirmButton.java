@@ -77,7 +77,6 @@ public class HoldToConfirmButton extends AbstractButton {
     @Override
     public boolean mouseClicked(@NotNull MouseButtonEvent event, boolean isDoubleClick) {
         if (isMouseOver(event.x(), event.y()) && active) {
-            System.out.println("mouseClicked");
             playDownSound(1f);
             held.add(-1);
             return true;

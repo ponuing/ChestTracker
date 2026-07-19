@@ -49,13 +49,11 @@ public class WidgetZOffsetWrapper<T extends AbstractWidget> extends AbstractWidg
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        System.out.println("KeyPressed");
         return baseWidget.keyPressed(event);
     }
 
     @Override
     public boolean keyReleased(KeyEvent event) {
-        System.out.println("KeyReleased");
         return baseWidget.keyReleased(event);
     }
 

@@ -1,6 +1,7 @@
 package red.jackf.chesttracker.impl;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.nimbusds.oauth2.sdk.id.Identifier;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -9,6 +10,7 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import net.minecraft.client.KeyMapping;
@@ -38,7 +40,9 @@ import red.jackf.chesttracker.impl.providers.InteractionTrackerImpl;
 import red.jackf.chesttracker.impl.providers.ProviderHandler;
 import red.jackf.chesttracker.impl.providers.ScreenCloseContextImpl;
 import red.jackf.chesttracker.impl.providers.ScreenOpenContextImpl;
+import red.jackf.chesttracker.impl.rendering.NameRenderer;
 import red.jackf.chesttracker.impl.storage.ConnectionSettings;
+import red.jackf.chesttracker.impl.storage.GlobalMemoryBankDefaults;
 import red.jackf.chesttracker.impl.storage.Storage;
 import red.jackf.chesttracker.impl.storage.backend.JsonBackend;
 import red.jackf.chesttracker.impl.storage.backend.NbtBackend;
@@ -87,6 +91,7 @@ public class ChestTracker implements ClientModInitializer {
                 Component.literal("Chest Tracker (Unofficial port) - Dark Mode"),
                 ResourcePackActivationType.NORMAL
         );
+
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             // opening Chest Tracker GUI with no screen open
             if (client.screen == null && client.getOverlay() == null)
@@ -185,6 +190,7 @@ public class ChestTracker implements ClientModInitializer {
         Storage.setup();
         DeveloperOverlay.setup();
         ConnectionSettings.load();
+        GlobalMemoryBankDefaults.load();
         ButtonPositionMap.loadUserPositions();
 
         for (EntrypointContainer<ChestTrackerPlugin> container : FabricLoader.getInstance().getEntrypointContainers("chesttracker", ChestTrackerPlugin.class)) {

@@ -78,7 +78,6 @@ public class StringSelectorWidget<T> extends AbstractWidget {
 
     @Override
     public void onClick(MouseButtonEvent event, boolean isDoubleClick) {
-        System.out.println("StringSelectorWidget");
         if (lastHovered != null) onSelect.accept(lastHovered);
     }
 
