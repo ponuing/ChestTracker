@@ -103,4 +103,16 @@ public class Storage {
         bank.getMetadata().updateModified();
         backend.save(bank, registries);
     }
+
+    public static boolean saveMetadata(String id, Metadata metadata) {
+        Optional<MemoryBankImpl> existing = MemoryBankAccessImpl.INSTANCE.getLoadedInternal();
+        if (existing.isPresent() && id.equals(existing.get().getId())) {
+            existing.get().setMetadata(metadata);
+            save(existing.get());
+            return true;
+        }
+
+        metadata.updateModified();
+        return backend.saveMetadata(id, metadata);
+    }
 }
