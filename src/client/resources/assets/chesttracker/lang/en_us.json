@@ -17,6 +17,7 @@
   "chesttracker.inventoryButton.rememberContainer.block": "Don't Remember Container",
   "chesttracker.inventoryButton.export": "Export Position",
   "chesttracker.inventoryButton.export.toast": "Exported to %s",
+  "chesttracker.storage.saveFailed": "Could not save storage %s; keeping it in memory",
   "chesttracker.inventoryButton.export.errorToast": "Error exporting position; check the console.",
 
   "config.jade.plugin_chesttracker.memory_preview": "Use Memories",

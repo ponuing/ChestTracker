@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import red.jackf.chesttracker.impl.ChestTracker;
 import red.jackf.chesttracker.impl.memory.MemoryBankImpl;
+import red.jackf.chesttracker.impl.storage.Storage;
 import red.jackf.chesttracker.impl.util.Constants;
 import red.jackf.chesttracker.impl.util.FileUtil;
 import red.jackf.chesttracker.impl.util.Misc;
@@ -95,18 +96,6 @@ public class NbtBackend extends FileBasedBackend {
                             return false;
                         }
 
-                        // Save metadata
-                        if (!saveMetadata(id, metadataSnapshot)) {
-                            LOGGER.error("Failed to save metadata for {}", id);
-                            return false;
-                        }
-
-                        // Check for cancellation
-                        if (Thread.currentThread().isInterrupted()) {
-                            LOGGER.debug("Save for {} was cancelled during metadata save", id);
-                            return false;
-                        }
-
                         // Save NBT data to a temporary file
                         LOGGER.debug("Saving {} to temporary file: {}", id, tempFile.getFileName());
                         boolean saveSuccess = FileUtil.saveToNbt(
@@ -173,6 +162,12 @@ public class NbtBackend extends FileBasedBackend {
                             return false;
                         }
 
+                        // Commit metadata only after the data file has been replaced successfully.
+                        if (!saveMetadata(id, metadataSnapshot)) {
+                            LOGGER.error("Saved NBT data but failed to save metadata for {}", id);
+                            return false;
+                        }
+
                         LOGGER.debug("Successfully completed atomic save for {}", id);
 
                         // Delete old temporary files (if any remain from previous unsuccessful saves)
@@ -214,9 +209,10 @@ public class NbtBackend extends FileBasedBackend {
 
             // Remove from the map after completion
             future.thenAccept(success -> {
-                pendingSavesNbt.remove(id);
+                pendingSavesNbt.remove(id, future);
                 if (!success) {
                     LOGGER.warn("Save failed for {}, data may be incomplete", id);
+                    Storage.reportSaveFailure(id);
                 } else {
                     LOGGER.debug("Successfully saved {} ({} entries)", id, entriesCount);
                 }
@@ -225,29 +221,38 @@ public class NbtBackend extends FileBasedBackend {
         } else {
             LOGGER.debug("Saving {}", memoryBank.getId());
             memoryBank.getMetadata().updateModified();
-            if (!saveMetadata(memoryBank.getId(), memoryBank.getMetadata())) return false;
-            return FileUtil.saveToNbt(memoryBank.getMemories(), MemoryBankImpl.DATA_CODEC, Constants.STORAGE_DIR.resolve(memoryBank.getId() + extension()), registries);
+            if (!FileUtil.saveToNbt(memoryBank.getMemories(), MemoryBankImpl.DATA_CODEC, Constants.STORAGE_DIR.resolve(memoryBank.getId() + extension()), registries)) {
+                return false;
+            }
+            return saveMetadata(memoryBank.getId(), memoryBank.getMetadata());
         }
     }
 
     // Waits for all active saves to complete if the game closes/the world is exited
-    public void waitForPendingSaves() {
+    @Override
+    public boolean waitForPendingSaves() {
         if (pendingSavesNbt.isEmpty()) {
             LOGGER.debug("No pending saves to wait for");
-            return;
+            return true;
         }
         LOGGER.debug("Waiting for {} pending save(s) to complete...", pendingSavesNbt.size());
 
-        CompletableFuture<Void> allSaves = CompletableFuture.allOf(
-                pendingSavesNbt.values().toArray(new CompletableFuture[0])
-        );
+        CompletableFuture<Boolean>[] saves = pendingSavesNbt.values().toArray(new CompletableFuture[0]);
+        CompletableFuture<Void> allSaves = CompletableFuture.allOf(saves);
 
         try {
             // Waiting of 30 seconds in case of game freezing.
             allSaves.get(300, TimeUnit.SECONDS);
-            LOGGER.debug("All pending saves completed");
+            boolean success = Arrays.stream(saves).allMatch(save -> Boolean.TRUE.equals(save.getNow(false)));
+            if (success) {
+                LOGGER.debug("All pending saves completed");
+            } else {
+                LOGGER.error("One or more pending saves failed");
+            }
+            return success;
         } catch (Exception ex) {
             LOGGER.error("Error or timeout waiting for saves to complete", ex);
+            return false;
         }
     }
 

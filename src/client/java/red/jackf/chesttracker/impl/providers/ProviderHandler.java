@@ -9,6 +9,7 @@ import red.jackf.chesttracker.api.ClientBlockSource;
 import red.jackf.chesttracker.api.providers.InteractionTracker;
 import red.jackf.chesttracker.api.providers.context.BlockPlacedContext;
 import red.jackf.chesttracker.api.providers.ServerProvider;
+import red.jackf.chesttracker.impl.ChestTracker;
 import red.jackf.chesttracker.impl.events.AfterPlayerPlaceBlock;
 import red.jackf.chesttracker.impl.memory.MemoryBankAccessImpl;
 import red.jackf.chesttracker.impl.util.CachedClientBlockSource;
@@ -69,6 +70,13 @@ public class ProviderHandler {
                 if (!coord.get().equals(this.lastCoordinate)) {
                     this.lastCoordinate = coord.get();
                     this.load(coord.get());
+                } else {
+                    // Proxy transfers can replace dynamic registries without changing the
+                    // public server address. Rebind saved item holders before recording
+                    // contents from the new registry set.
+                    if (!MemoryBankAccessImpl.INSTANCE.reloadForRegistryChange()) {
+                        ChestTracker.LOGGER.error("Failed to rebind Chest Tracker storage after a registry change");
+                    }
                 }
             } else {
                 this.unload();

@@ -3,10 +3,12 @@ package red.jackf.chesttracker.impl.memory;
 import com.mojang.serialization.Codec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import red.jackf.chesttracker.api.ClientBlockSource;
 import red.jackf.chesttracker.api.memory.Memory;
 import red.jackf.chesttracker.api.memory.MemoryBank;
@@ -35,6 +37,7 @@ public class MemoryBankImpl implements MemoryBank {
     private final Map<Identifier, MemoryKeyImpl> memoryKeys;
     private Metadata metadata;
     private String id;
+    private @Nullable HolderLookup.Provider registryProvider;
 
     public MemoryBankImpl(Metadata metadata, Map<Identifier, MemoryKeyImpl> keys) {
         this.metadata = metadata;
@@ -48,6 +51,22 @@ public class MemoryBankImpl implements MemoryBank {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * Returns the registry set that this bank's item stacks were decoded or captured with.
+     *
+     * <p>Dynamic registry holders are tied to their owning registry set. Multiplayer proxy
+     * transfers can replace the client's active registry set before the previous bank is
+     * saved, so using the current level's registries would make otherwise valid enchantments,
+     * trims, and other registry-backed components impossible to encode.</p>
+     */
+    public @Nullable HolderLookup.Provider getRegistryProvider() {
+        return registryProvider;
+    }
+
+    public void setRegistryProvider(@Nullable HolderLookup.Provider registryProvider) {
+        this.registryProvider = registryProvider;
     }
 
     public Metadata getMetadata() {

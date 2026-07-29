@@ -42,6 +42,17 @@ public interface Backend {
     boolean save(MemoryBankImpl memoryBank, @Nullable HolderLookup.Provider registries);
 
     /**
+     * Wait for any queued writes to finish and report whether they completed successfully.
+     *
+     * <p>Synchronous and in-memory backends have nothing to wait for.</p>
+     *
+     * @return Whether all pending writes completed successfully
+     */
+    default boolean waitForPendingSaves() {
+        return true;
+    }
+
+    /**
      * Returns a small label to show at the top of the "edit memory bank" screen.
      *
      * @param memoryBankId ID of a memory bank to generate a label for.

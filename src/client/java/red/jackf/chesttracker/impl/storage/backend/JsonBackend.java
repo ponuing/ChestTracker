@@ -16,6 +16,7 @@ import red.jackf.chesttracker.impl.config.ChestTrackerConfig;
 import red.jackf.chesttracker.impl.memory.MemoryBankImpl;
 import red.jackf.chesttracker.impl.memory.MemoryKeyImpl;
 import red.jackf.chesttracker.impl.memory.metadata.Metadata;
+import red.jackf.chesttracker.impl.storage.Storage;
 import red.jackf.chesttracker.impl.util.Constants;
 import red.jackf.chesttracker.impl.util.FileUtil;
 import red.jackf.chesttracker.impl.util.Misc;
@@ -26,6 +27,7 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -139,18 +141,6 @@ public class JsonBackend extends FileBasedBackend {
                             return false;
                         }
 
-                        // Save metadata
-                        if (!saveMetadata(id, metadataSnapshot)) {
-                            LOGGER.error("Failed to save metadata for {}", id);
-                            return false;
-                        }
-
-                        // Check for cancellation
-                        if (Thread.currentThread().isInterrupted()) {
-                            LOGGER.debug("Save for {} was cancelled during metadata save", id);
-                            return false;
-                        }
-
                         // Encode JSON data
                         LOGGER.debug("Encoding JSON data for {}", id);
                         Optional<JsonElement> memoryJson = MemoryBankImpl.DATA_CODEC
@@ -228,6 +218,12 @@ public class JsonBackend extends FileBasedBackend {
                             return false;
                         }
 
+                        // Commit metadata only after the data file has been replaced successfully.
+                        if (!saveMetadata(id, metadataSnapshot)) {
+                            LOGGER.error("Saved JSON data but failed to save metadata for {}", id);
+                            return false;
+                        }
+
                         LOGGER.debug("Successfully completed atomic save for {}", id);
 
                         // Delete old temporary files (if any remain from previous unsuccessful saves)
@@ -267,9 +263,10 @@ public class JsonBackend extends FileBasedBackend {
             pendingSavesJson.put(id, future);
 
             future.thenAccept(success -> {
-                pendingSavesJson.remove(id);
+                pendingSavesJson.remove(id, future);
                 if (!success) {
                     LOGGER.warn("JSON save failed for {}, data may be incomplete", id);
+                    Storage.reportSaveFailure(id);
                 } else {
                     LOGGER.debug("JSON successfully saved {} ({} entries)", id, entriesCount);
                 }
@@ -282,9 +279,6 @@ public class JsonBackend extends FileBasedBackend {
             DynamicOps<JsonElement> ops = registries == null ? JsonOps.INSTANCE : registries.createSerializationContext(JsonOps.INSTANCE);
 
             memoryBank.getMetadata().updateModified();
-            boolean metaSaveSuccess = saveMetadata(memoryBank.getId(), memoryBank.getMetadata());
-            if (!metaSaveSuccess) return false;
-
             Path path = Constants.STORAGE_DIR.resolve(memoryBank.getId() + extension());
 
             try {
@@ -293,7 +287,7 @@ public class JsonBackend extends FileBasedBackend {
                         .resultOrPartial(Util.prefix("Error encoding memories", LOGGER::error));
                 if (memoryJson.isPresent()) {
                     FileUtils.write(path.toFile(), FileUtil.gson().toJson(memoryJson.get()), StandardCharsets.UTF_8);
-                    return true;
+                    return saveMetadata(memoryBank.getId(), memoryBank.getMetadata());
                 } else {
                     LOGGER.error("Unknown error encoding memories for {}", memoryBank.getId());
                 }
@@ -306,23 +300,30 @@ public class JsonBackend extends FileBasedBackend {
     }
 
     // Waits for all active saves to complete if the game closes/the world
-    public void waitForPendingSaves() {
+    @Override
+    public boolean waitForPendingSaves() {
         if (pendingSavesJson.isEmpty()) {
             LOGGER.debug("No pending JSON saves to wait for");
-            return;
+            return true;
         }
         LOGGER.debug("Waiting for {} pending JSON save(s) to complete...", pendingSavesJson.size());
 
-        CompletableFuture<Void> allSaves = CompletableFuture.allOf(
-                pendingSavesJson.values().toArray(new CompletableFuture[0])
-        );
+        CompletableFuture<Boolean>[] saves = pendingSavesJson.values().toArray(new CompletableFuture[0]);
+        CompletableFuture<Void> allSaves = CompletableFuture.allOf(saves);
 
         try {
             // Waiting of 30 seconds in case of game freezing.
             allSaves.get(300, TimeUnit.SECONDS);
-            LOGGER.debug("All pending JSON saves completed");
+            boolean success = Arrays.stream(saves).allMatch(save -> Boolean.TRUE.equals(save.getNow(false)));
+            if (success) {
+                LOGGER.debug("All pending JSON saves completed");
+            } else {
+                LOGGER.error("One or more pending JSON saves failed");
+            }
+            return success;
         } catch (Exception ex) {
             LOGGER.error("Error or timeout waiting for JSON saves to complete", ex);
+            return false;
         }
     }
 }
