@@ -25,6 +25,7 @@ import red.jackf.whereisit.api.SearchRequest;
 import red.jackf.whereisit.client.api.events.SearchInvoker;
 import red.jackf.whereisit.client.api.events.SearchRequestPopulator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -90,7 +91,7 @@ public class ItemListWidget extends AbstractWidget {
     @Override
     protected void extractWidgetRenderState(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         this.hasTooltip = false;
-        this.pendingTooltip = Collections.emptyList();
+        this.pendingTooltip = new ArrayList<>();
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND_SPRITE, getWidth(), getHeight(),
                 0, 0, getX(), getY(), getWidth(), getHeight());
         this.renderItems(graphics);
@@ -162,7 +163,7 @@ public class ItemListWidget extends AbstractWidget {
         graphics.fill(slotX + 1, slotY + 1, slotX + GuiConstants.GRID_SLOT_SIZE - 1, slotY + GuiConstants.GRID_SLOT_SIZE - 1, 0x80_FFFFFF);
         if (!this.hideTooltip) {
             var stack = items.get(index);
-            var lines = Screen.getTooltipFromItem(Minecraft.getInstance(), stack);
+            List<Component> lines = new ArrayList<>(Screen.getTooltipFromItem(Minecraft.getInstance(), stack));
             if (stack.getCount() > 999) {
                 lines.add(Component.literal(Strings.commaSeparated(stack.getCount()))
                         .withStyle(ChatFormatting.GREEN));
