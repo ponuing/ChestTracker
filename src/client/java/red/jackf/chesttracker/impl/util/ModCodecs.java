@@ -54,7 +54,7 @@ public class ModCodecs {
                     instance -> instance.group(
                             Item.CODEC.fieldOf("id").forGetter(ItemStack::getItemHolder),
                             ExtraCodecs.POSITIVE_INT.fieldOf("count").orElse(1).forGetter(ItemStack::getCount),
-                            DataComponentPatch.CODEC.optionalFieldOf("components", DataComponentPatch.EMPTY).forGetter(ItemStack::getComponentsPatch)
+                            SAFE_COMPONENT_PATCH_CODEC.optionalFieldOf("components", DataComponentPatch.EMPTY).forGetter(ItemStack::getComponentsPatch)
                     ).apply(instance, ItemStack::new)
             )
     )).xmap(opt -> opt.orElse(ItemStack.EMPTY), stack -> stack.isEmpty() ? Optional.empty() : Optional.of(stack));
