@@ -74,9 +74,12 @@ public class Storage {
             return existing;
 
         var level = Minecraft.getInstance().level;
+        var connection = Minecraft.getInstance().getConnection();
         HolderLookup.Provider registries = null;
 
-        if (level != null) {
+        if (connection != null) {
+            registries = connection.registryAccess();
+        } else if (level != null) {
             registries = level.registryAccess();
         }
 
@@ -94,9 +97,12 @@ public class Storage {
         }
 
         var level = Minecraft.getInstance().level;
+        var connection = Minecraft.getInstance().getConnection();
         HolderLookup.Provider registries = null;
 
-        if (level != null) {
+        if (connection != null) {
+            registries = connection.registryAccess();
+        } else if (level != null) {
             registries = level.registryAccess();
         }
 
