@@ -38,12 +38,12 @@ public abstract class GuiMaterialListMixin extends GuiListBase<MaterialListEntry
     @Inject(method = "initGui",
             at = @At(value = "INVOKE",
                     target = "Lfi/dy/masa/litematica/gui/GuiMaterialList;createButton(IIILfi/dy/masa/litematica/gui/GuiMaterialList$ButtonListener$Type;)I",
-                    ordinal = 5,
+                    ordinal = 6,
                     shift = At.Shift.AFTER))
     private void addSearchAllButton(CallbackInfo ci, @Local(ordinal = 0) int x, @Local(ordinal = 1) int y) {
         if (!ChestTrackerConfig.INSTANCE.instance().compatibility.litematica.materialListSearchButtons) return;
 
-        x += StringUtils.getStringWidth(StringUtils.translate("litematica.gui.button.material_list.write_to_json")) + 10 + 1;
+        x += StringUtils.getStringWidth(StringUtils.translate("litematica.gui.button.material_list.export")) + 10 + 1;
 
         ButtonGeneric searchButton = new ButtonGeneric(x, y, -1, 20,
                 StringUtils.translate("chesttracker.compatibility.litematica.searchMissing"),
