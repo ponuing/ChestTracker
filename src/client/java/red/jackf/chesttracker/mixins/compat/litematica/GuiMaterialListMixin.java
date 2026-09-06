@@ -35,9 +35,9 @@ public abstract class GuiMaterialListMixin extends GuiListBase<MaterialListEntry
     }
 
     // bad mixin @At ik
-    @Inject(method = "initGui",
+    @Inject(method = "createButtons",
             at = @At(value = "INVOKE",
-                    target = "Lfi/dy/masa/litematica/gui/GuiMaterialList;createButton(IIILfi/dy/masa/litematica/gui/GuiMaterialList$ButtonListener$Type;)I",
+                    target = "Lfi/dy/masa/litematica/gui/GuiMaterialList;createButton(IILfi/dy/masa/litematica/gui/GuiMaterialList$ButtonListener$Type;)I",
                     ordinal = 5,
                     shift = At.Shift.AFTER))
     private void addSearchAllButton(CallbackInfo ci, @Local(ordinal = 0) int x, @Local(ordinal = 1) int y) {
@@ -64,7 +64,7 @@ public abstract class GuiMaterialListMixin extends GuiListBase<MaterialListEntry
         }));
     }
 
-    @Inject(method = "initGui", at = @At(value = "INVOKE", target = "Lfi/dy/masa/litematica/gui/GuiMaterialList;addWidget(Lfi/dy/masa/malilib/gui/widgets/WidgetBase;)Lfi/dy/masa/malilib/gui/widgets/WidgetBase;"))
+    @Inject(method = "initGui", at = @At("RETURN"))
     private void addCTInfo(CallbackInfo ci) {
         var config = ChestTrackerConfig.INSTANCE.instance().compatibility.litematica;
 
