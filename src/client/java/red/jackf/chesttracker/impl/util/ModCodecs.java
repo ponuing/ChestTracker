@@ -26,6 +26,27 @@ import java.util.function.Predicate;
  * Codecs for classes that aren't ours
  */
 public class ModCodecs {
+    private static final Codec<DataComponentPatch> SAFE_COMPONENT_PATCH_CODEC = new Codec<>() {
+        @Override
+        public <T> DataResult<Pair<DataComponentPatch, T>> decode(DynamicOps<T> ops, T input) {
+            DataResult<Pair<DataComponentPatch, T>> res = DataComponentPatch.CODEC.decode(ops, input);
+            if (res.isError()) {
+                return DataResult.success(Pair.of(DataComponentPatch.EMPTY, input));
+            }
+            return res;
+        }
+
+        @Override
+        public <T> DataResult<T> encode(DataComponentPatch input, DynamicOps<T> ops, T prefix) {
+            DataResult<T> res = DataComponentPatch.CODEC.encode(input, ops, prefix);
+            if (res.isError()) {
+                FileUtil.LOGGER.warn("Failed to encode item DataComponentPatch ({}); falling back to empty patch for item", res.error().get().message());
+                return DataComponentPatch.CODEC.encode(DataComponentPatch.EMPTY, ops, prefix);
+            }
+            return res;
+        }
+    };
+
     /**
      * Identical to {@link ItemStack#OPTIONAL_CODEC}, but will not enforce a max stack size of 99.
      */
@@ -35,7 +56,7 @@ public class ModCodecs {
                             // Item.CODEC.fieldOf("id").forGetter(ItemStack::getItem),
                             Item.CODEC.fieldOf("id").forGetter(stack -> BuiltInRegistries.ITEM.wrapAsHolder(stack.getItem())),
                             ExtraCodecs.POSITIVE_INT.fieldOf("count").orElse(1).forGetter(ItemStack::getCount),
-                            DataComponentPatch.CODEC.optionalFieldOf("components", DataComponentPatch.EMPTY).forGetter(ItemStack::getComponentsPatch)
+                            SAFE_COMPONENT_PATCH_CODEC.optionalFieldOf("components", DataComponentPatch.EMPTY).forGetter(ItemStack::getComponentsPatch)
                     ).apply(instance, (Holder<Item> itemHolder, Integer count, DataComponentPatch patch) -> {
                         ItemStack stack = new ItemStack(itemHolder, count);
                         stack.applyComponents(patch);
