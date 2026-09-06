@@ -29,21 +29,23 @@ import red.jackf.whereisit.client.api.events.SearchRequestPopulator;
 @Mixin(value = GuiMaterialList.class, remap = false)
 public abstract class GuiMaterialListMixin extends GuiListBase<MaterialListEntry, WidgetMaterialListEntry, WidgetListMaterialList> {
     @Shadow @Final private MaterialListBase materialList;
+    @Shadow
+    private GuiMaterialList.ExportType exportType;
 
     private GuiMaterialListMixin(int listX, int listY) {
         super(listX, listY);
     }
 
     // bad mixin @At ik
-    @Inject(method = "initGui",
+    @Inject(method = "createButtons",
             at = @At(value = "INVOKE",
-                    target = "Lfi/dy/masa/litematica/gui/GuiMaterialList;createButton(IIILfi/dy/masa/litematica/gui/GuiMaterialList$ButtonListener$Type;)I",
+                    target = "Lfi/dy/masa/litematica/gui/GuiMaterialList;createButton(IILfi/dy/masa/litematica/gui/GuiMaterialList$ButtonListener$Type;)I",
                     ordinal = 5,
                     shift = At.Shift.AFTER))
     private void addSearchAllButton(CallbackInfo ci, @Local(ordinal = 0) int x, @Local(ordinal = 1) int y) {
         if (!ChestTrackerConfig.INSTANCE.instance().compatibility.litematica.materialListSearchButtons) return;
 
-        x += StringUtils.getStringWidth(StringUtils.translate("litematica.gui.button.material_list.write_to_json")) + 10 + 1;
+        x += StringUtils.getStringWidth(this.exportType.getDisplayName()) + 10 + 1;
 
         ButtonGeneric searchButton = new ButtonGeneric(x, y, -1, 20,
                 StringUtils.translate("chesttracker.compatibility.litematica.searchMissing"),
@@ -64,7 +66,7 @@ public abstract class GuiMaterialListMixin extends GuiListBase<MaterialListEntry
         }));
     }
 
-    @Inject(method = "initGui", at = @At(value = "INVOKE", target = "Lfi/dy/masa/litematica/gui/GuiMaterialList;addWidget(Lfi/dy/masa/malilib/gui/widgets/WidgetBase;)Lfi/dy/masa/malilib/gui/widgets/WidgetBase;"))
+    @Inject(method = "initGui", at = @At("RETURN"))
     private void addCTInfo(CallbackInfo ci) {
         var config = ChestTrackerConfig.INSTANCE.instance().compatibility.litematica;
 

@@ -9,7 +9,7 @@ import red.jackf.UpdateDependenciesTask
 
 plugins {
     id("maven-publish")
-    id("fabric-loom") version "1.14-SNAPSHOT"
+    id("fabric-loom") version "1.17-SNAPSHOT"
     id("com.github.breadmoirai.github-release") version "2.5.2"
     id("org.ajoberstar.grgit") version "5.3.0"
     id("me.modmuss50.mod-publish-plugin") version "0.8.3"
@@ -170,7 +170,7 @@ loom {
     log4jConfigs.from(file("log4j2.xml"))
 
     runConfigs.configureEach {
-        this.programArgs.addAll("--username JackFred".split(" "))
+        programArguments.addAll("--username", "JackFred")
     }
 
     accessWidenerPath.set(file("src/client/resources/chesttracker.accesswidener"))
