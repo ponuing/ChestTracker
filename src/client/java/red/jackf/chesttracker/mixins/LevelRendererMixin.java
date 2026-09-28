@@ -59,6 +59,9 @@ public class LevelRendererMixin {
                 renderPass.close();
             }
 
+            // has to happen after the pass is closed, the buffer pools create a fence here
+            NameRenderer.endFrame();
+
             NameRenderer.clearScheduledLabels();
         }
     }
