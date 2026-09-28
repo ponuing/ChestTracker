@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import com.mojang.math.Axis;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -20,6 +21,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import red.jackf.chesttracker.api.memory.Memory;
 import red.jackf.chesttracker.api.memory.MemoryKey;
 import red.jackf.chesttracker.api.providers.ProviderUtils;
@@ -46,14 +48,21 @@ public class NameRenderer {
 
     private record ScheduledLabel(Vec3 position, Component text, boolean focused) {}
 
-    public static void renderWorld(Camera camera) {
+    public static void renderWorld(Camera camera, RenderPass renderPass) {
         DrawCollector drawCollector = new DrawCollector();
         try {
             renderLabels(camera, drawCollector);
-            drawCollector.draw();
+            drawCollector.draw(renderPass);
         } finally {
             STAGED_BUFFER.endFrame();
         }
+    }
+
+    /**
+     * In 26.3 {@link PoseStack#mulPose} no longer accepts a {@link Quaternionf} directly, only a matrix.
+     */
+    private static void mulPose(PoseStack pose, Quaternionf rotation) {
+        pose.mulPose(new Matrix4f().rotation(rotation));
     }
 
     public static void scheduleLabels() {
@@ -143,8 +152,8 @@ public class NameRenderer {
         Vec3 camPos = camera.position();
 
         PoseStack pose = new PoseStack();
-        pose.mulPose(Axis.XP.rotationDegrees(camera.xRot()));
-        pose.mulPose(Axis.YP.rotationDegrees(camera.yRot() + 180f));
+        mulPose(pose, Axis.XP.rotationDegrees(camera.xRot()));
+        mulPose(pose, Axis.YP.rotationDegrees(camera.yRot() + 180f));
 
         scheduledLabels.stream()
                 .sorted(Comparator.comparingDouble(label -> -camPos.distanceToSqr(label.position)))
@@ -163,8 +172,8 @@ public class NameRenderer {
         pose.translate(xOffset, yOffset, zOffset);
 
         // Additional rotation for billboard
-        pose.mulPose(Axis.YP.rotationDegrees(-camera.yRot()));
-        pose.mulPose(Axis.XP.rotationDegrees(camera.xRot()));
+        mulPose(pose, Axis.YP.rotationDegrees(-camera.yRot()));
+        mulPose(pose, Axis.XP.rotationDegrees(camera.xRot()));
 
         // Scale
         float scale = 0.025f * WhereIsItConfig.INSTANCE.instance().getClient().containerNameLabelScale;
@@ -176,13 +185,12 @@ public class NameRenderer {
         float x = -width / 2f;
 
         // Background
-        RenderType backgroundType = RenderTypes.textBackground();
-        VertexConsumer bgBuffer = drawCollector.getBuffer(backgroundType);
         int bgColour = ((int)(MC.options.getBackgroundOpacity(0.25F) * 255F)) << 24;
-        bgBuffer.addVertex(matrix, x - 1, -1f, 0).setColor(bgColour).setLight(FULL_BRIGHT);
-        bgBuffer.addVertex(matrix, x - 1, 10f, 0).setColor(bgColour).setLight(FULL_BRIGHT);
-        bgBuffer.addVertex(matrix, x + width, 10f, 0).setColor(bgColour).setLight(FULL_BRIGHT);
-        bgBuffer.addVertex(matrix, x + width, -1f, 0).setColor(bgColour).setLight(FULL_BRIGHT);
+        if (bgColour != 0) {
+            TextRenderable background = font.prepareBackground(x - 1, -1f, x + width, 10f, bgColour);
+            VertexConsumer bgBuffer = drawCollector.getBuffer(background.renderType(SEE_THROUGH));
+            background.render(matrix, bgBuffer, FULL_BRIGHT, false);
+        }
 
         // Text
         Font.PreparedText preparedText = Minecraft.getInstance().font.prepareText(
@@ -229,13 +237,13 @@ public class NameRenderer {
             return draw;
         }
 
-        private void draw() {
+        private void draw(RenderPass renderPass) {
             STAGED_BUFFER.upload();
 
             for (int i = 0; i < draws.size(); i++) {
                 StagedVertexBuffer.ExecuteInfo executeInfo = STAGED_BUFFER.getExecuteInfo(draws.get(i));
                 if (executeInfo != null) {
-                    preparedRenderTypes.get(i).drawFromBuffer(executeInfo);
+                    preparedRenderTypes.get(i).drawFromBuffer(executeInfo, renderPass);
                 }
             }
         }

@@ -1,9 +1,11 @@
 package red.jackf.chesttracker.mixins;
 
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import net.minecraft.client.Camera;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -15,19 +17,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import red.jackf.chesttracker.impl.rendering.NameRenderer;
 
+import java.util.Optional;
+import java.util.OptionalDouble;
+
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderLevelEnd(
-            GraphicsResourceAllocator allocator,
-            DeltaTracker tracker,
-            boolean blockOutline,
+            GraphicsResourceAllocator resourceAllocator,
+            boolean renderOutline,
             CameraRenderState cameraRenderState,
-            Matrix4fc frustum,
-            GpuBufferSlice fog,
-            Vector4f fogCol,
-            boolean sky,
+            GpuBufferSlice terrainFog,
+            Vector4f fogColor,
+            boolean shouldRenderSky,
+            boolean consistentDepthRequired,
             CallbackInfo ci) {
 
         // Planning the tags
@@ -35,8 +39,25 @@ public class LevelRendererMixin {
 
         // Rendering the labels
         if (NameRenderer.hasScheduledLabels()) {
-            Camera cam = Minecraft.getInstance().gameRenderer.mainCamera();
-            NameRenderer.renderWorld(cam);
+            Minecraft minecraft = Minecraft.getInstance();
+            Camera cam = minecraft.gameRenderer.mainCamera();
+            RenderTarget mainTarget = minecraft.gameRenderer.mainRenderTarget();
+
+            RenderPass renderPass = RenderSystem.getDevice()
+                    .createCommandEncoder()
+                    .createRenderPass(
+                            () -> "ChestTracker",
+                            mainTarget.getColorTextureView(),
+                            Optional.empty(),
+                            mainTarget.getDepthTextureView(),
+                            OptionalDouble.of(0.0)
+                    );
+            try {
+                RenderSystem.bindDefaultUniforms(renderPass);
+                NameRenderer.renderWorld(cam, renderPass);
+            } finally {
+                renderPass.close();
+            }
 
             NameRenderer.clearScheduledLabels();
         }

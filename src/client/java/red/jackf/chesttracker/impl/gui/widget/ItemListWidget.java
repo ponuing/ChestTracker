@@ -201,7 +201,8 @@ public class ItemListWidget extends AbstractWidget {
                 this.pendingTooltipX,
                 this.pendingTooltipY,
                 DefaultTooltipPositioner.INSTANCE,
-                null
+                null,
+                false
         );
     }
 

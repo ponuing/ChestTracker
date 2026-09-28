@@ -45,6 +45,9 @@ base {
 }
 
 repositories {
+    // Local builds of WhereIsIt / JackFredLib for 26.3 (not published yet)
+    mavenLocal()
+
     // Mod Menu, EMI
     maven {
         name = "TerraformersMC"
@@ -162,6 +165,9 @@ java {
 
 loom {
     splitEnvironmentSourceSets()
+
+    // WTHIT has no 26.3 build yet - temporarily disabled for this port
+    sourceSets["client"].java.exclude("red/jackf/chesttracker/impl/compat/mods/wthit/**")
 
     mods {
         create("chesttracker") {

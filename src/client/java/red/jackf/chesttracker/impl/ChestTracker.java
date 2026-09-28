@@ -65,7 +65,7 @@ public class ChestTracker implements ClientModInitializer {
     public static final KeyMapping.Category CHESTTRACKER_CATEGORY =
             new KeyMapping.Category(Identifier.fromNamespaceAndPath("chesttracker", "title"));
     public static final KeyMapping OPEN_GUI = KeyMappingHelper.registerKeyMapping(
-            new KeyMapping("key.chesttracker.open_gui", InputConstants.Type.KEYSYM, InputConstants.KEY_GRAVE, CHESTTRACKER_CATEGORY)
+            new KeyMapping("key.chesttracker.open_gui", InputConstants.Type.KEYBOARD, InputConstants.KEY_GRAVE, CHESTTRACKER_CATEGORY)
     );
 
     public static void openInGame(Minecraft client, @Nullable Screen parent) {
