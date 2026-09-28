@@ -48,10 +48,16 @@ public class NameRenderer {
 
     private record ScheduledLabel(Vec3 position, Component text, boolean focused) {}
 
-    public static void renderWorld(Camera camera, RenderPass renderPass) {
+    /**
+     * Collects the label geometry and uploads it. This has to happen <b>before</b> a render pass is
+     * opened: 26.3 uses {@code copyToBuffer} for the upload, which the command encoder rejects
+     * while a pass is active.
+     */
+    public static DrawCollector prepareWorld(Camera camera) {
         DrawCollector drawCollector = new DrawCollector();
         renderLabels(camera, drawCollector);
-        drawCollector.draw(renderPass);
+        drawCollector.upload();
+        return drawCollector;
     }
 
     /**
@@ -217,7 +223,7 @@ public class NameRenderer {
 
         pose.popPose();
     }
-    private static final class DrawCollector {
+    public static final class DrawCollector {
         private final List<StagedVertexBuffer.Draw> draws = new ArrayList<>();
         private final List<PreparedRenderType> preparedRenderTypes = new ArrayList<>();
         @Nullable private RenderType lastRenderType;
@@ -241,9 +247,18 @@ public class NameRenderer {
             return draw;
         }
 
-        private void draw(RenderPass renderPass) {
+        private void upload() {
             STAGED_BUFFER.upload();
+        }
 
+        public boolean hasDraws() {
+            return !draws.isEmpty();
+        }
+
+        /**
+         * Draws the collected geometry. Only {@code drawFromBuffer} is allowed in here, no uploads.
+         */
+        public void draw(RenderPass renderPass) {
             for (int i = 0; i < draws.size(); i++) {
                 StagedVertexBuffer.ExecuteInfo executeInfo = STAGED_BUFFER.getExecuteInfo(draws.get(i));
                 if (executeInfo != null) {
