@@ -13,7 +13,6 @@ import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.renderer.StagedVertexBuffer;
 import net.minecraft.client.renderer.rendertype.PreparedRenderType;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.BlockHitResult;
@@ -158,6 +157,11 @@ public class NameRenderer {
 
     public static void renderLabels(Camera camera, DrawCollector drawCollector) {
         if (scheduledLabels.isEmpty()) return;
+
+        if (Minecraft.getInstance().gui.hud.isHidden()){
+            scheduledLabels.clear();
+            return;
+        }
 
         Vec3 camPos = camera.position();
 

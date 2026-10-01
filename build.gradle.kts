@@ -45,9 +45,6 @@ base {
 }
 
 repositories {
-    // Local builds of WhereIsIt / JackFredLib for 26.3 (not published yet)
-    mavenLocal()
-
     // Mod Menu, EMI
     maven {
         name = "TerraformersMC"
