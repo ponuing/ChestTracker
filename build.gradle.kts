@@ -163,6 +163,9 @@ java {
 loom {
     splitEnvironmentSourceSets()
 
+    // WTHIT has no 26.3 build yet - temporarily disabled for this port
+    sourceSets["client"].java.exclude("red/jackf/chesttracker/impl/compat/mods/wthit/**")
+
     mods {
         create("chesttracker") {
             sourceSet(sourceSets["client"])

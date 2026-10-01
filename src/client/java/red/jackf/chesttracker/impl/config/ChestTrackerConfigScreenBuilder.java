@@ -1,5 +1,6 @@
 package red.jackf.chesttracker.impl.config;
 
+import com.mojang.blaze3d.Blaze3D;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
@@ -7,7 +8,6 @@ import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.gui.YACLScreen;
 import net.minecraft.ChatFormatting;
-import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
@@ -379,7 +379,7 @@ public class ChestTrackerConfigScreenBuilder {
                 .name(translatable("chesttracker.config.storage"))
                 .option(ButtonOption.createBuilder()
                         .name(translatable("chesttracker.config.storage.openFolder"))
-                        .action((screen, button) -> Util.getPlatform().openUri(Constants.STORAGE_DIR.toUri()))
+                        .action((screen, button) -> Blaze3D.openPath(Constants.STORAGE_DIR))
                         .text(literal(getDirectorySizeString()))
                         .build())
                 .option(Option.<Backend.Type>createBuilder()
